@@ -16,19 +16,22 @@
 - 穩定版<br>
 [<img alt='Get it on F-Droid' src='https://fdroid.gitlab.io/artwork/badge/get-it-on.png' height='80px'/>](https://f-droid.org/packages/com.osfans.trime)
 [<img alt='Google Play立即下載' src='https://play.google.com/intl/en_us/badges/images/generic/zh-tw_badge_web_generic.png' height='80px'/>](https://play.google.com/store/apps/details?id=com.osfans.trime)
-[<img alt='酷安' src='https://www.coolapk.com/static/img/icon.png'
+[<img alt='酷安' src='https://static.coolapk.com/images/header-logo.png'
 height='80px'/>](https://www.coolapk.com/apk/com.osfans.trime)
 - 測試版
 [點擊下載](https://github.com/osfans/trime/tree/gh-pages)
 
+- 配置文件
+[rimerc](https://github.com/Bambooin/rimerc)
+
 ## 鳴謝/Credits
 - 開發：[osfans](https://github.com/osfans)
-- 貢獻：[boboIqiqi](https://github.com/boboIqiqi)、[Bambooin](https://github.com/Bambooin)、[senchi96](https://github.com/senchi96)、[heiher](https://github.com/heiher)
+- 貢獻：[boboIqiqi](https://github.com/boboIqiqi)、[Bambooin](https://github.com/Bambooin)、[senchi96](https://github.com/senchi96)、[heiher](https://github.com/heiher)、[abay](https://github.com/a342191555)
 - [維基](https://github.com/osfans/trime/wiki)：[xiaoqun2016](https://github.com/xiaoqun2016)、[boboIqiqi](https://github.com/boboIqiqi)
 - 翻譯：天真可愛的滿滿（繁體中文）、點解（英文）
 - 鍵盤：天真可愛的滿滿、皛筱晓小笨鱼、吴琛11、熊貓阿Bo、默默ㄇㄛˋ
 - 捐贈：[Releases](https://github.com/osfans/trime/releases)中的“打賞”實時更新
-- 社區：在[Issues](https://github.com/osfans/trime/issues)、[QQ羣480159874](http://shang.qq.com/wpa/qunwpa?idkey=e31ecec8f92699597d9154f890841b3e477f5185902f10400e7c9e670a11202f)、[酷安](http://www.coolapk.com/apk/com.osfans.trime)、[Google Play](https://play.google.com/store/apps/details?id=com.osfans.trime)、[貼吧](http://tieba.baidu.com/f?kw=rime)中反饋意見的網友
+- 社區：在[Issues](https://github.com/osfans/trime/issues)、[QQ羣811142286](https://shang.qq.com/wpa/qunwpa?idkey=d68b19daf218e0f0feacc3533493e44bf9cd79f4895f9b598aa1f9079910af27)、[酷安](http://www.coolapk.com/apk/com.osfans.trime)、[Google Play](https://play.google.com/store/apps/details?id=com.osfans.trime)、[貼吧](http://tieba.baidu.com/f?kw=rime)中反饋意見的網友
 - 項目：[RIME]、[OpenCC]、[注音倉頡輸入法]等開源項目
 
 ## 沿革/History
@@ -65,7 +68,7 @@ make release
 The following guide is for the specific platform prebuild setting:
 - [Arch Linux](https://www.archlinux.org/)
   ```bash
-   yaourt -S android-{ndk,sdk,sdk-build-tools,sdk-platform-tools,platform} gradle
+   yaourt -S android-{ndk,sdk,sdk-build-tools,sdk-platform-tools,platform} gradle clang
    make release
   ```
 
@@ -83,7 +86,7 @@ The following guide is for the specific platform prebuild setting:
   [Homebrew mirror](https://lug.ustc.edu.cn/wiki/mirrors/help/brew.git) of it if your network is slow.
 
   ```bash
-   brew install automake cmake opencc boost python gradle doxygen
+   brew install automake cmake opencc boost python gradle doxygen clang
   ```
 
   Set the path environment in ~/.bashrc if you use bash like this

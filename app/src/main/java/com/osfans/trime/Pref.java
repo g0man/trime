@@ -22,16 +22,19 @@ import android.Manifest;
 import android.annotation.TargetApi;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceActivity;
 import android.preference.PreferenceScreen;
+import android.preference.SwitchPreference;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
@@ -40,13 +43,17 @@ import android.view.inputmethod.InputMethodManager;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
+import org.ocpsoft.prettytime.PrettyTime;
+
+import java.util.Date;
+
 /** 配置輸入法 */
 public class Pref extends PreferenceActivity
     implements SharedPreferences.OnSharedPreferenceChangeListener {
 
   private static String TAG = Pref.class.getSimpleName();
   private ProgressDialog mProgressDialog;
-  private Preference mKeySoundVolumePref, mKeyVibrateDurationPref;
+  private Preference mKeySoundVolumePref, mKeyVibrateDurationPref,mKeyVibrateAmplitudePref;
 
   private String getCommit(String version) {
     String commit;
@@ -64,6 +71,33 @@ public class Pref extends PreferenceActivity
     Intent intent = pref.getIntent();
     intent.setData(Uri.withAppendedPath(intent.getData(), "commits/"+commit));
     pref.setIntent(intent);
+  }
+
+  private void setBackgroundSyncSummary(Context context) { //设置后台同步的summary文字
+    SwitchPreference sp = ((SwitchPreference)findPreference("pref_sync_bg"));
+    if(context==null){ //当前没有 Trime 服务
+      if(sp.isChecked()){
+        sp.setSummaryOn(R.string.pref_sync_bg_never);
+      }else {
+        sp.setSummaryOff(R.string.pref_sync_bg_tip);
+      }
+    } else {
+      String summary = context.getString(R.string.pref_sync_bg_tip);
+
+      if (sp.isChecked()) { // 后台同步功能开启
+        boolean success = Function.getPref(context).getBoolean("last_sync_status", false); // 上次同步状态
+        summary = success ? context.getString(R.string.pref_sync_bg_success) : context.getString(R.string.pref_sync_bg_failure);
+        long time = Function.getPref(context).getLong("last_sync_time", 0); // 上次同步时间
+        if (time == 0) {
+          summary = context.getString(R.string.pref_sync_bg_tip);
+        } else {
+          summary = String.format(summary, new PrettyTime().format(new Date(time))); //使用PrettyTime包展示相对时间
+        }
+        sp.setSummaryOn(summary);
+      }else {
+        sp.setSummaryOff(summary);
+      }
+    }
   }
 
   @Override
@@ -100,8 +134,15 @@ public class Pref extends PreferenceActivity
     mProgressDialog.setCancelable(false);
     mKeySoundVolumePref = findPreference("key_sound_volume");
     mKeyVibrateDurationPref = findPreference("key_vibrate_duration");
+    mKeyVibrateAmplitudePref = findPreference("key_vibrate_amplitude");
     mKeySoundVolumePref.setEnabled(prefs.getBoolean("key_sound", false));
     mKeyVibrateDurationPref.setEnabled(prefs.getBoolean("key_vibrate", false));
+    if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        mKeyVibrateAmplitudePref.setEnabled(prefs.getBoolean("key_vibrate", false));
+    }
+    else {
+        mKeyVibrateAmplitudePref.setEnabled(false);
+    }
     boolean isQQInstalled = Function.isAppAvailable(this, "com.tencent.mobileqq")
                          || Function.isAppAvailable(this, "com.tencent.mobileqqi")
                          || Function.isAppAvailable(this, "com.tencent.qq.kddi")
@@ -129,7 +170,9 @@ public class Pref extends PreferenceActivity
       case "key_vibrate":
         if (trime != null) trime.resetEffect();
         value = prefs.getBoolean(key, false);
+        boolean isapi26andabove = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O;
         mKeyVibrateDurationPref.setEnabled(value);
+        mKeyVibrateAmplitudePref.setEnabled(isapi26andabove && value);
         break;
       case "key_sound_volume":
         if (trime != null) {
@@ -138,6 +181,7 @@ public class Pref extends PreferenceActivity
         }
         break;
       case "key_vibrate_duration":
+      case "key_vibrate_amplitude":
         if (trime != null) {
           trime.resetEffect();
           trime.vibrateEffect();
@@ -177,6 +221,7 @@ public class Pref extends PreferenceActivity
   protected void onResume() {
     super.onResume();
     getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
+    setBackgroundSyncSummary(this);
   }
 
   @Override
@@ -233,14 +278,15 @@ public class Pref extends PreferenceActivity
     }
   }
 
-  private void deployOpencc() {
-    boolean b = Config.deployOpencc();
+  private void deployOpencc(Context context) {
+    boolean b = Config.get(context).deployOpencc(context);
   }
 
   @Override
   public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
     boolean b;
     String key = preference.getKey();
+    final Pref self = this;
     switch (key) {
       case "pref_enable": //啓用
         if (!isEnabled()) startActivity(new Intent(Settings.ACTION_INPUT_METHOD_SETTINGS));
@@ -249,19 +295,19 @@ public class Pref extends PreferenceActivity
         ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();
         return true;
       case "pref_themes": //主題
-        new ThemeDlg(this);
+        new ThemeDlg(self);
         return true;
       case "pref_colors": //配色
-        new ColorDialog(this).show();
+        new ColorDialog(self).show();
         return true;
       case "pref_schemas": //方案
-        new SchemaDialog(this);
+        new SchemaDialog(self);
         return true;
       case "pref_maintenance": //維護
         Function.check();
         return true;
       case "pref_deploy_opencc": //部署OpenCC
-        deployOpencc();
+        deployOpencc(self);
         return true;
       case "pref_deploy": //部署
         mProgressDialog.setMessage(getString(R.string.deploy_progress));
@@ -271,7 +317,7 @@ public class Pref extends PreferenceActivity
                   @Override
                   public void run() {
                     try {
-                      Function.deploy();
+                      Function.deploy(self);
                     } catch (Exception ex) {
                       Log.e(TAG, "Deploy Exception" + ex);
                     } finally {
@@ -290,7 +336,7 @@ public class Pref extends PreferenceActivity
                   @Override
                   public void run() {
                     try {
-                      Function.sync();
+                      Function.sync(self);
                     } catch (Exception ex) {
                       Log.e(TAG, "Sync Exception" + ex);
                     } finally {
@@ -301,15 +347,19 @@ public class Pref extends PreferenceActivity
                 })
             .start();
         return true;
+      case "pref_input":
+      case "pref_sync_bg": //后台同步
+        setBackgroundSyncSummary(self);
+        return true;
       case "pref_reset": //回廠
-        new ResetDialog(this).show();
+        new ResetDialog(self).show();
         return true;
       case "pref_licensing": //許可協議
         showLicenseDialog();
         return true;
       case "pref_ui": //色調
         finish();
-        Function.showPrefDialog(this);
+        Function.showPrefDialog(self);
         return true;
     }
     return false;

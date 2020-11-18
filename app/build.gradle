@@ -1,7 +1,7 @@
 apply plugin: 'com.android.application'
 
 android {
-    compileSdkVersion 29
+    compileSdkVersion 30
 
     defaultConfig {
         applicationId "com.osfans.trime"
@@ -52,6 +52,9 @@ android {
             version "3.10.2"
         }
     }
-    ndkVersion "20.0.5594570"
+    ndkVersion "21.3.6528147"
 }
 
+dependencies {
+    implementation 'org.ocpsoft.prettytime:prettytime:4.0.1.Final'
+}

@@ -57,7 +57,8 @@
     <string name="key_sound">按鍵聲音</string>
     <string name="key_sound_volume">按鍵音量</string>
     <string name="key_vibrate">按鍵時振動</string>
-    <string name="key_vibrate_duration">按鍵振動強度</string>
+    <string name="key_vibrate_duration">按鍵振動時長</string>
+    <string name="key_vibrate_amplitude">按鍵振動強度</string>
     <string name="key_vibrate_duration_unit">毫秒</string>
     <string name="speak_key">按鍵時朗讀字符</string>
     <string name="speak_commit">上屏時朗讀字符</string>
@@ -95,4 +96,9 @@
     <string name="pref_themes_name_trime">默認</string>
     <string name="shared_data_dir">共享資料夾</string>
     <string name="user_data_dir">使用者資料夾</string>
+    <string name="pref_sync_bg">後台同步</string>
+    <string name="pref_sync_bg_success">上次同步於 %s，成功</string>
+    <string name="pref_sync_bg_failure">上次同步於 %s，失敗</string>
+    <string name="pref_sync_bg_never">後台同步未運行</string>
+    <string name="pref_sync_bg_tip">點擊以啟用後台同步</string>
 </resources>

@@ -30,6 +30,7 @@ import android.os.Build.VERSION;
 import android.os.Build.VERSION_CODES;
 import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.text.InputType;
 import android.view.Gravity;
 import android.view.KeyEvent;
@@ -93,6 +94,26 @@ public class Trime extends InputMethodService
   private InlineModeType inlinePreedit; //嵌入模式
 
   private IntentReceiver mIntentReceiver;
+  static private Handler syncBackgroundHandler=new  Handler(new Handler.Callback() {
+    @Override
+    public boolean handleMessage(Message msg) {
+      if(!((Trime)msg.obj).isShowInputRequested()){ //若当前没有输入面板，则后台同步。防止面板关闭后5秒内再次打开
+        Function.syncBackground((Trime)msg.obj);
+        ((Trime)msg.obj).loadConfig();
+      }
+      return false;
+    }
+  });
+
+  @Override
+  public void onWindowHidden(){
+    boolean sync_bg = mConfig.getSyncBackground();
+    if(sync_bg){
+      Message msg = new Message();
+      msg.obj = this;
+      syncBackgroundHandler.sendMessageDelayed(msg,5000); // 输入面板隐藏5秒后，开始后台同步
+    }
+  }
 
   private boolean isWinFixed() {
     return VERSION.SDK_INT < VERSION_CODES.LOLLIPOP
@@ -313,7 +334,7 @@ public class Trime extends InputMethodService
   }
 
   public void invalidate() {
-    Rime.get();
+    Rime.get(this);
     if (mConfig != null) mConfig.destroy();
     mConfig = new Config(this);
     reset();
@@ -349,7 +370,7 @@ public class Trime extends InputMethodService
   public void resetKeyboard() {
     if (mKeyboardView != null) {
       mKeyboardView.setShowHint(!Rime.getOption("_hide_key_hint"));
-      mKeyboardView.reset(); //實體鍵盤無軟鍵盤
+      mKeyboardView.reset(this); //實體鍵盤無軟鍵盤
     }
   }
 
@@ -358,10 +379,10 @@ public class Trime extends InputMethodService
       loadBackground();
       setShowComment(!Rime.getOption("_hide_comment"));
       mCandidate.setVisibility(!Rime.getOption("_hide_candidate") ? View.VISIBLE : View.GONE);
-      mCandidate.reset();
+      mCandidate.reset(this);
       mShowWindow = mConfig.getShowWindow();
       mComposition.setVisibility(mShowWindow ? View.VISIBLE : View.GONE);
-      mComposition.reset();
+      mComposition.reset(this);
     }
   }
 
@@ -369,7 +390,7 @@ public class Trime extends InputMethodService
   private void reset() {
     mConfig.reset();
     loadConfig();
-    if (mKeyboardSwitch != null) mKeyboardSwitch.reset();
+    if (mKeyboardSwitch != null) mKeyboardSwitch.reset(this);
     resetCandidate();
     hideComposition();
     resetKeyboard();
@@ -397,6 +418,8 @@ public class Trime extends InputMethodService
   }
 
   public static Trime getService() {
+    if (self == null)
+      self = new Trime();
     return self;
   }
 
@@ -540,7 +563,7 @@ public class Trime extends InputMethodService
         if (canCompose) break;
         return;
     }
-    Rime.get();
+    Rime.get(this);
     if (reset_ascii_mode) mAsciiMode = false;
     // Select a keyboard based on the input type of the editing field.
     mKeyboardSwitch.init(getMaxWidth()); //橫豎屏切換時重置鍵盤
